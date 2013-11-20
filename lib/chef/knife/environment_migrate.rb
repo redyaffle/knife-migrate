@@ -43,6 +43,7 @@ module KnifeMigrate
     end
 
     def run
+      self.config = Chef::Config.merge!(config)
       validate
       dst_env_name = name_args.first
       src_env_name = name_args.last
@@ -53,8 +54,8 @@ module KnifeMigrate
       diff_version = versions(dst_cookbooks, src_cookbooks)
       diff_version.each do |value|
         question = "Change cookbook #{value['name']} version from #{value[dst_env_name]} to #{value[src_env_name]}"
-        if ui.ask_question?(question) === 'y'
-          dst_env.cookbook(value['name'], value[dst_env_name])
+        if ui.ask_question(question) === 'y'
+          dst_env.cookbook(value['name'], value[src_env_name])
         end
       end
       ui.msg(dst_env.to_hash)

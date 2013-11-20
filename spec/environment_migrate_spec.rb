@@ -88,20 +88,26 @@ describe KnifeMigrate::EnvironmentMigrate do
   end
 
   it 'sets up knife plugin' do
-    env_object = double('environment')
+    expect(plugin).to receive(:config)
+    expect(Chef::Config).to receive(:merge!)
+
+    dst_env = double('environment')
+    src_env = double('environment')
     ui_object = double('ui')
     expect(plugin).to receive(:name_args).and_return(['debug', 'unstable']).
       exactly(3).times
-    expect(plugin).to receive(:environment).and_return(env_object).twice
-    expect(env_object).to receive(:cookbook_versions).and_return({}).twice
+    expect(plugin).to receive(:environment).with('debug').and_return(dst_env)
+    expect(plugin).to receive(:environment).with('unstable').and_return(src_env)
+    expect(src_env).to receive(:cookbook_versions)
+    expect(dst_env).to receive(:cookbook_versions)
     expect(plugin).to receive(:versions).and_return([
-      { name: 'cc_logrotate', debug: '= 1.1.2', unstable: '= 1.1.3' }
+      { 'name' => 'cc_logrotate', 'debug' => '= 1.1.2', 'unstable' => '= 1.1.3' }
     ])
     expect(plugin).to receive(:ui).and_return(ui_object).twice
-    expect(ui_object).to receive(:ask_question?).and_return('y')
-    expect(env_object).to receive(:cookbook)
+    expect(ui_object).to receive(:ask_question).and_return('y')
+    expect(dst_env).to receive(:cookbook).with('cc_logrotate', '= 1.1.3')
     expect(ui_object).to receive(:msg)
-    expect(env_object).to receive(:to_hash)
+    expect(dst_env).to receive(:to_hash)
     plugin.run
   end
 end
