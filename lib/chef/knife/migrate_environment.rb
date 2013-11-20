@@ -33,15 +33,17 @@ module KnifeMigrate
 
     def versions(src_cookbooks, dst_cookbooks)
       result = []
-      src_cookbooks.each do |cookbook_name, url_blob|
-        src_version = cookbook_version(url_blob)
-        cookbook = dst_cookbooks[cookbook_name]
-        dst_version = cookbook_version(cookbook)
-        result << {
-          name: cookbook_name,
-          src_version: src_version,
-          dst_version: dst_version
-        }
+      src_cookbooks.each do |name, src_data|
+        src_version = cookbook_version(src_data)
+        dst_data = dst_cookbooks[name]
+        dst_version = cookbook_version(dst_data)
+        if src_version != dst_version
+          result << {
+            name: name,
+            src_version: src_version,
+            dst_version: dst_version
+          }
+        end
       end
       result
     end

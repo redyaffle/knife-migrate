@@ -60,64 +60,112 @@ describe 'Migrate::Environment' do
     expect(plugin.cookbook_version(chef_input)).to eq('1.0.2')
   end
 
-  it 'grabs right version' do
-   src_cookbooks =
-     {
-       "ant"=>
-       {
-         "url"=> "https://private-chef.in.mycasebook.org/",
-         "versions"=>
-         [{"url"=>
-           "https://private-chef.in.mycasebook.org/organizations/in_casebook/cookbooks/ant/1.0.2",
-             "version"=>"1.0.2"
-         }]
-       },
-       "apache2"=>
-       {"url"=>
-        "https://private-chef.in.mycasebook.org/organizations/in_casebook/cookbooks/apache2",
+  context '#versions' do
+    it 'grabs right version' do
+      src_cookbooks =
+        {
+        "ant"=>
+        {
+          "url"=> "https://private-chef.in.mycasebook.org/",
           "versions"=>
-        [{"url"=>
-          "https://private-chef.in.mycasebook.org/organizations/in_casebook/cookbooks/apache2/1.8.4",
-            "version"=>"1.8.4"
-        }]
-       }
-     }
-   dst_cookbooks =
-     {
-       "ant"=>
-       {
-         "url"=>
-         "https://private-chef.in.mycasebook.org/organizations/in_casebook/cookbooks/ant",
+          [{"url"=>
+            "https://private-chef.in.mycasebook.org/organizations/in_casebook/cookbooks/ant/1.0.2",
+              "version"=>"1.0.2"
+          }]
+        },
+        "apache2"=>
+        {"url"=>
+         "https://private-chef.in.mycasebook.org/organizations/in_casebook/cookbooks/apache2",
            "versions"=>
          [{"url"=>
-           "https://private-chef.in.mycasebook.org/organizations/in_casebook/cookbooks/ant/1.0.2",
-             "version"=>"1.0.1"
+           "https://private-chef.in.mycasebook.org/organizations/in_casebook/cookbooks/apache2/1.8.4",
+             "version"=>"1.8.4"
          }]
-       },
-       "apache2"=>
-       {"url"=>
-        "https://private-chef.in.mycasebook.org/organizations/in_casebook/cookbooks/apache2",
+        }
+      }
+        dst_cookbooks =
+          {
+          "ant"=>
+          {
+            "url"=>
+            "https://private-chef.in.mycasebook.org/organizations/in_casebook/cookbooks/ant",
+              "versions"=>
+            [{"url"=>
+              "https://private-chef.in.mycasebook.org/organizations/in_casebook/cookbooks/ant/1.0.2",
+                "version"=>"1.0.1"
+            }]
+          },
+          "apache2"=>
+          {"url"=>
+           "https://private-chef.in.mycasebook.org/organizations/in_casebook/cookbooks/apache2",
+             "versions"=>
+           [{"url"=>
+             "https://private-chef.in.mycasebook.org/organizations/in_casebook/cookbooks/apache2/1.8.4",
+               "version"=>"1.8.3"
+           }]
+          }
+        }
+          expect(plugin.versions(src_cookbooks, dst_cookbooks)).to match_array(
+            [
+              { name: 'ant', src_version: '1.0.2', dst_version: '1.0.1' },
+              { name: 'apache2', src_version: '1.8.4', dst_version: '1.8.3' }
+            ]
+          )
+    end
+
+    it 'does not return version if the versions are same' do
+      src_cookbooks =
+        {
+        "ant"=>
+        {
+          "url"=> "https://private-chef.in.mycasebook.org/",
           "versions"=>
-        [{"url"=>
-          "https://private-chef.in.mycasebook.org/organizations/in_casebook/cookbooks/apache2/1.8.4",
-            "version"=>"1.8.3"
-        }]
-       }
-     }
-    expect(plugin.versions(src_cookbooks, dst_cookbooks)).to match_array(
-      [
-        { name: 'ant', src_version: '1.0.2', dst_version: '1.0.1' },
-        { name: 'apache2', src_version: '1.8.4', dst_version: '1.8.3' }
-      ]
-     )
+          [{"url"=>
+            "https://private-chef.in.mycasebook.org/organizations/in_casebook/cookbooks/ant/1.0.2",
+              "version"=>"1.0.2"
+          }]
+        },
+        "apache2"=>
+        {"url"=>
+         "https://private-chef.in.mycasebook.org/organizations/in_casebook/cookbooks/apache2",
+           "versions"=>
+         [{"url"=>
+           "https://private-chef.in.mycasebook.org/organizations/in_casebook/cookbooks/apache2/1.8.4",
+             "version"=>"1.8.4"
+         }]
+        }
+      }
+        dst_cookbooks =
+          {
+          "ant"=>
+          {
+            "url"=> "https://private-chef.in.mycasebook.org/",
+            "versions"=>
+            [{"url"=>
+              "https://private-chef.in.mycasebook.org/organizations/in_casebook/cookbooks/ant/1.0.2",
+                "version"=>"1.0.2"
+            }]
+          },
+          "apache2"=>
+          {"url"=>
+           "https://private-chef.in.mycasebook.org/organizations/in_casebook/cookbooks/apache2",
+             "versions"=>
+           [{"url"=>
+             "https://private-chef.in.mycasebook.org/organizations/in_casebook/cookbooks/apache2/1.8.4",
+               "version"=>"1.8.4"
+           }]
+          }
+        }
+          expect(plugin.versions(src_cookbooks, dst_cookbooks)).to match_array([])
+    end
   end
 
   it 'sets up knife subcommand' do
-      allow(plugin).to receive(:name_args).and_return(['debug', 'unstable'])
-      expect(plugin).to receive(:validate)
-      expect(plugin).to receive(:cookbooks).with('debug')
-      expect(plugin).to receive(:cookbooks).with('unstable')
-      expect(plugin).to receive(:versions)
-      plugin.run
+    allow(plugin).to receive(:name_args).and_return(['debug', 'unstable'])
+    expect(plugin).to receive(:validate)
+    expect(plugin).to receive(:cookbooks).with('debug')
+    expect(plugin).to receive(:cookbooks).with('unstable')
+    expect(plugin).to receive(:versions)
+    plugin.run
   end
 end
