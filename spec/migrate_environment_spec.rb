@@ -2,34 +2,122 @@ require 'spec_helper'
 require 'chef/knife/migrate_environment'
 
 describe 'Migrate::Environment' do
-
-  let(:plugin) { Migrate::Environment.new }
+  let(:plugin) { KnifeMigrate::EnvironmentMigrate.new }
+  let(:rest_object) { double(:rest) }
 
   before do
-    # plugin.run
+    allow(plugin).to receive(:rest).and_return(rest_object)
+    allow(rest_object).to receive(:get_rest)
   end
 
   it 'is knife plugin' do
-    expect(Migrate::Environment.banner).to eq('knife migrate --e1 [source env] --e2 [destination env]')
+    banner = 'knife environment migrate --e1 [source env] --e2 [destination env]'
+    expect(KnifeMigrate::EnvironmentMigrate.banner).to eq(banner)
   end
 
-  context 'arguments' do
-    it 'exits if no arguments are provided' do
-      expect(plugin).to receive(:name_args).and_return([])
+  context 'arguments validation' do
+    it 'displays usage if no arguments are provided' do
+      allow(plugin).to receive(:name_args).and_return([])
       expect(plugin).to receive(:show_usage)
       expect(plugin).to receive(:exit)
-      plugin.run
+      plugin.validate
+    end
+
+    it 'displays usage if only one environment is provided' do
+      allow(plugin).to receive(:name_args).and_return(['debug'])
+      expect(plugin).to receive(:show_usage)
+      expect(plugin).to receive(:exit)
+      plugin.validate
     end
 
     it 'does not exit if argument is provided' do
-      expect(plugin).to receive(:name_args).and_return(['--e1 debug'])
+      allow(plugin).to receive(:name_args).and_return(['debug', 'unstable'])
       expect(plugin).not_to receive(:show_usage)
       expect(plugin).not_to receive(:exit)
-      plugin.run
+      plugin.validate
     end
   end
 
-  xit 'grabs cookbooks from environment' do
+  it 'grabs cookbooks from environment' do
+    allow(plugin).to receive(:name_args).and_return(['debug', 'unstable'])
+    expect(plugin).to receive(:rest).and_return(rest_object)
+    expect(rest_object).to receive(:get_rest).with(
+      'environments/debug/cookbooks'
+    )
+    plugin.cookbooks('debug')
+  end
 
+  it 'grabs version from environment' do
+    chef_input = {
+      "url"=>
+      "https://private-chef.in.mycasebook.org/organizations/in_casebook/cookbooks/ant",
+        "versions"=>
+      [{"url"=>
+        "https://private-chef.in.mycasebook.org/organizations/in_casebook/cookbooks/ant/1.0.2",
+          "version"=>"1.0.2"
+      }]
+    }
+    expect(plugin.cookbook_version(chef_input)).to eq('1.0.2')
+  end
+
+  it 'grabs right version' do
+   src_cookbooks =
+     {
+       "ant"=>
+       {
+         "url"=> "https://private-chef.in.mycasebook.org/",
+         "versions"=>
+         [{"url"=>
+           "https://private-chef.in.mycasebook.org/organizations/in_casebook/cookbooks/ant/1.0.2",
+             "version"=>"1.0.2"
+         }]
+       },
+       "apache2"=>
+       {"url"=>
+        "https://private-chef.in.mycasebook.org/organizations/in_casebook/cookbooks/apache2",
+          "versions"=>
+        [{"url"=>
+          "https://private-chef.in.mycasebook.org/organizations/in_casebook/cookbooks/apache2/1.8.4",
+            "version"=>"1.8.4"
+        }]
+       }
+     }
+   dst_cookbooks =
+     {
+       "ant"=>
+       {
+         "url"=>
+         "https://private-chef.in.mycasebook.org/organizations/in_casebook/cookbooks/ant",
+           "versions"=>
+         [{"url"=>
+           "https://private-chef.in.mycasebook.org/organizations/in_casebook/cookbooks/ant/1.0.2",
+             "version"=>"1.0.1"
+         }]
+       },
+       "apache2"=>
+       {"url"=>
+        "https://private-chef.in.mycasebook.org/organizations/in_casebook/cookbooks/apache2",
+          "versions"=>
+        [{"url"=>
+          "https://private-chef.in.mycasebook.org/organizations/in_casebook/cookbooks/apache2/1.8.4",
+            "version"=>"1.8.3"
+        }]
+       }
+     }
+    expect(plugin.versions(src_cookbooks, dst_cookbooks)).to match_array(
+      [
+        { name: 'ant', src_version: '1.0.2', dst_version: '1.0.1' },
+        { name: 'apache2', src_version: '1.8.4', dst_version: '1.8.3' }
+      ]
+     )
+  end
+
+  it 'sets up knife subcommand' do
+      allow(plugin).to receive(:name_args).and_return(['debug', 'unstable'])
+      expect(plugin).to receive(:validate)
+      expect(plugin).to receive(:cookbooks).with('debug')
+      expect(plugin).to receive(:cookbooks).with('unstable')
+      expect(plugin).to receive(:versions)
+      plugin.run
   end
 end
