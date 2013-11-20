@@ -1,8 +1,8 @@
 require 'spec_helper'
-require 'chef/knife/migrate_environment'
+require 'chef/knife/environment_diff_cookbooks'
 
-describe 'Migrate::Environment' do
-  let(:plugin) { KnifeMigrate::EnvironmentMigrate.new }
+describe KnifeMigrate::EnvironmentDiffCookbooks do
+  let(:plugin) { described_class.new }
   let(:rest_object) { double(:rest) }
 
   before do
@@ -11,8 +11,8 @@ describe 'Migrate::Environment' do
   end
 
   it 'is knife plugin' do
-    banner = 'knife environment migrate --e1 [source env] --e2 [destination env]'
-    expect(KnifeMigrate::EnvironmentMigrate.banner).to eq(banner)
+    banner = 'knife environment diff cookbooks --e1 [source env] --e2 [destination env]'
+    expect(described_class.banner).to eq(banner)
   end
 
   context 'arguments validation' do
@@ -161,11 +161,14 @@ describe 'Migrate::Environment' do
   end
 
   it 'sets up knife subcommand' do
+    ui_object = double(:ui)
     allow(plugin).to receive(:name_args).and_return(['debug', 'unstable'])
     expect(plugin).to receive(:validate)
     expect(plugin).to receive(:cookbooks).with('debug')
     expect(plugin).to receive(:cookbooks).with('unstable')
     expect(plugin).to receive(:versions)
+    expect(plugin).to receive(:ui).and_return(ui_object).twice
+    expect(ui_object).to receive(:msg).twice
     plugin.run
   end
 end

@@ -1,7 +1,7 @@
 require 'chef/knife'
 module KnifeMigrate
-  class EnvironmentMigrate < Chef::Knife
-    banner 'knife environment migrate --e1 [source env] --e2 [destination env]'
+  class EnvironmentDiffCookbooks < Chef::Knife
+    banner 'knife environment diff cookbooks --e1 [source env] --e2 [destination env]'
 
     option :env1,
       short:  '--e1',
@@ -20,7 +20,9 @@ module KnifeMigrate
       dst_env = name_args.last
       src_cookbooks = cookbooks(src_env)
       dst_cookbooks = cookbooks(dst_env)
-      versions(src_cookbooks, dst_cookbooks)
+      diff_versions = versions(src_cookbooks, dst_cookbooks)
+      ui.msg("cookbook version differences between #{src_env} and #{dst_env}")
+      ui.msg(diff_versions)
     end
 
     def validate
