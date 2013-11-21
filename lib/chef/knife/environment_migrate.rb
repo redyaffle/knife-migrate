@@ -57,6 +57,7 @@ module KnifeMigrate
       load_environments
       cookbook_versions
       update_attrs
+      ui.msg(@dst_env.to_hash)
     end
 
     def load_environments
@@ -98,7 +99,6 @@ module KnifeMigrate
           @dst_env.cookbook(value['name'], value[@src_env_name])
         end
       end
-      ui.msg(@dst_env.to_hash)
     end
   end
 end
