@@ -261,7 +261,8 @@ describe KnifeMigrate::EnvironmentMigrate do
       allow(plugin).to receive(:ui).and_return(ui_obj)
       allow(ui_obj).to receive(:msg)
       allow(plugin).to receive(:confirm_update?).and_return(true, true, false)
-      expect(ui_obj).to receive(:ask_question).with('What is the new value of app_server_name: ').
+      expect(ui_obj).to receive(:ask_question).with(
+        'What is the new value of app_server_name on debug: ').
         and_return('debug.in.mycasebook.org')
       plugin.update_attrs
       expect(dst_env.default_attributes['cc_nginx']).to eq({
