@@ -2,17 +2,17 @@ require 'chef/knife'
 
 module KnifeMigrate
   class EnvironmentMigrate < Chef::Knife
-    banner 'knife environment migrate --this [Environment] --from [Environment]'
-
-    option :this,
-      short:  '--this',
-      long:  '--this',
-      description: 'Migrating Environment'
+    banner 'knife environment migrate --from [Environment] --to [Environment]'
 
     option :from,
       short: '--from',
       long:  '--from',
       description: 'From Environment'
+
+    option :to,
+      short:  '--to',
+      long:  '--to',
+      description: 'To Environment'
 
     def validate
       self.config = Chef::Config.merge!(config)
@@ -64,17 +64,9 @@ module KnifeMigrate
       result
     end
 
-    def run
-      validate
-      load_environments
-      update_versions
-      update_attrs
-      ui.msg(@dst_env)
-    end
-
     def load_environments
-      @dst_env_name ||= name_args.first
-      @src_env_name ||= name_args.last
+      @dst_env_name ||= name_args.last
+      @src_env_name ||= name_args.first
       @dst_env ||= environment(@dst_env_name)
       @src_env ||= environment(@src_env_name)
     end
@@ -112,5 +104,12 @@ module KnifeMigrate
       end
     end
 
+    def run
+      validate
+      load_environments
+      update_versions
+      update_attrs
+      ui.msg(::JSON.pretty_generate(@dst_env.to_hash))
+    end
   end
 end

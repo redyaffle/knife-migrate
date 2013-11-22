@@ -5,7 +5,7 @@ describe KnifeMigrate::EnvironmentMigrate do
   let(:plugin) { described_class.new }
 
   it 'sets up banner' do
-    banner = 'knife environment migrate --this [Environment] --from [Environment]'
+    banner = 'knife environment migrate --from [Environment] --to [Environment]'
     expect(described_class.banner).to eq(banner)
   end
 
@@ -65,7 +65,7 @@ describe KnifeMigrate::EnvironmentMigrate do
 
   context '#versions' do
     before do
-      allow(plugin).to receive(:name_args).and_return(['debug', 'unstable'])
+      allow(plugin).to receive(:name_args).and_return(['unstable', 'debug'])
       allow(plugin).to receive(:environment)
       plugin.load_environments
     end
@@ -159,7 +159,7 @@ describe KnifeMigrate::EnvironmentMigrate do
     end
 
     before do
-      allow(plugin).to receive(:name_args).and_return(['debug', 'stable'])
+      allow(plugin).to receive(:name_args).and_return(['stable', 'debug'])
       allow(plugin).to receive(:environment).with('debug').and_return(dst_env)
       allow(plugin).to receive(:environment).with('stable').and_return(src_env)
 
@@ -249,7 +249,7 @@ describe KnifeMigrate::EnvironmentMigrate do
     end
 
     before do
-      allow(plugin).to receive(:name_args).and_return(['debug', 'stable'])
+      allow(plugin).to receive(:name_args).and_return(['stable', 'debug'])
       allow(plugin).to receive(:environment).with('debug').and_return(dst_env)
       allow(plugin).to receive(:environment).with('stable').and_return(src_env)
 
@@ -301,16 +301,17 @@ describe KnifeMigrate::EnvironmentMigrate do
     end
 
     it 'sets up run method' do
-      allow(plugin).to receive(:name_args).and_return(['debug', 'stable'])
+      allow(plugin).to receive(:name_args).and_return(['stable', 'debug'])
       allow(plugin).to receive(:environment).with('debug').and_return(dst_env)
       allow(plugin).to receive(:environment).with('stable').and_return(src_env)
       expect(plugin).to receive(:validate)
-      expect(plugin).to receive(:load_environments)
+      expect(plugin).to receive(:load_environments).and_call_original
       expect(plugin).to receive(:update_versions)
       expect(plugin).to receive(:update_attrs)
       ui_obj = double('ui')
       allow(plugin).to receive(:ui).and_return(ui_obj)
-      allow(ui_obj).to receive(:msg)
+      expect(JSON).to receive(:pretty_generate).with(dst_env.to_hash)
+      expect(ui_obj).to receive(:msg)
       plugin.run
     end
   end
