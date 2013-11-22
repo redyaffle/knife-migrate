@@ -278,14 +278,14 @@ describe KnifeMigrate::EnvironmentMigrate do
 
     it 'sets environment path based on cookbook path' do
       expect(Chef::Config).to receive(:[]).with(:cookbook_path).and_return(
-        '/Users/test/workspace/.chef/../organizations/in/cookbooks'
+        ['/Users/test/workspace/.chef/../organizations/in/cookbooks']
       )
       expect(plugin.environment_path).to eq(expected_env_path)
     end
 
     it 'sets handles cookbook path ending with /' do
       expect(Chef::Config).to receive(:[]).with(:cookbook_path).and_return(
-        '/Users/test/workspace/.chef/../organizations/in/cookbooks/'
+        ['/Users/test/workspace/.chef/../organizations/in/cookbooks/']
       )
       expect(plugin.environment_path).to eq(expected_env_path)
     end
@@ -332,7 +332,7 @@ describe KnifeMigrate::EnvironmentMigrate do
       allow(plugin).to receive(:environment).with('stable').and_return(src_env)
       allow(plugin).to receive(:ui).and_return(ui_obj)
       expect(Chef::Config).to receive(:[]).with(:cookbook_path).and_return(
-        '/Users/test/workspace/.chef/../organizations/in/cookbooks'
+        ['/Users/test/workspace/.chef/../organizations/in/cookbooks']
       )
     end
 
@@ -342,7 +342,7 @@ describe KnifeMigrate::EnvironmentMigrate do
       expect(plugin).to receive(:update_versions)
       expect(plugin).to receive(:update_attrs)
       expect(JSON).to receive(:pretty_generate).with(dst_env.to_hash)
-      expect(ui_obj).to receive(:msg)
+      allow(ui_obj).to receive(:msg)
       expect(::File).to receive(:open).with("#{environment_path}/debug.json", 'w')
       plugin.run
     end

@@ -105,7 +105,7 @@ module KnifeMigrate
     end
 
     def environment_path
-      cookbook_path = Chef::Config[:cookbook_path]
+      cookbook_path = Chef::Config[:cookbook_path].first
       cookbook_path.chomp('/')
       organization_path = ::File.split(cookbook_path).first
       ::File.absolute_path "#{organization_path}/environments"
