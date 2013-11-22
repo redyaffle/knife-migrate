@@ -42,6 +42,18 @@ module KnifeMigrate
       result
     end
 
+    def confirm_update?(question)
+      case ui.ask_question(question)
+      when 'y', 'Y'
+        true
+      when 'n', 'N'
+        false
+      else
+        ui.msg('Just say y or n.')
+        confirm_update?(question)
+      end
+    end
+
     def missing_attrs(dst_attrs, src_attrs)
       result = []
       src_attrs.keys.each do |cookbook_name|
@@ -55,9 +67,9 @@ module KnifeMigrate
     def run
       validate
       load_environments
-      cookbook_versions
+      update_versions
       update_attrs
-      ui.msg(@dst_env.to_hash)
+      ui.msg(@dst_env)
     end
 
     def load_environments
@@ -67,38 +79,38 @@ module KnifeMigrate
       @src_env ||= environment(@src_env_name)
     end
 
-    private
+    def update_versions
+      dst_cookbooks = @dst_env.cookbook_versions
+      src_cookbooks = @src_env.cookbook_versions
+      versions(dst_cookbooks, src_cookbooks).each do |value|
+        question = "Change cookbook #{value['name']} version from"
+        question += " #{value[@dst_env_name]} to #{value[@src_env_name]} (y/n): "
+        if confirm_update?(question)
+          @dst_env.cookbook(value['name'], value[@src_env_name])
+        end
+      end
+    end
 
     def update_attrs
       dst_attrs = @dst_env.default_attributes
       src_attrs = @src_env.default_attributes
       missing_attrs(dst_attrs, src_attrs).each do |cookbook_attr|
         cookbook_name = cookbook_attr.keys.first
-        question = "Do you want to update #{cookbook_name}?"
-        if ui.ask_question(question) === 'y'
+        ui.msg("Attributes #{cookbook_name} is missing")
+        question = "Do you want this #{cookbook_name} attributes? (y/n): "
+        if confirm_update?(question)
+          dst_attrs[cookbook_name] = cookbook_attr[cookbook_name]
           cookbook_attr[cookbook_name].each do |attr_name, attr_value|
             ui.msg("The value of #{attr_name} is #{attr_value}")
-            question = "Change the value of #{attr_name} (y/n): "
-            if ui.ask_question(question) === 'y'
-              question = "What is the new value of #{attr_name}"
+            if confirm_update?("Change the value of #{attr_name} (y/n): ")
+              question = "What is the new value of #{attr_name}: "
               answer =  ui.ask_question(question)
-              attr_value = answer
+              dst_attrs[cookbook_name][attr_name] = answer
             end
           end
         end
       end
     end
 
-    def cookbook_versions
-      dst_cookbooks = @dst_env.cookbook_versions
-      src_cookbooks = @src_env.cookbook_versions
-      versions(dst_cookbooks, src_cookbooks).each do |value|
-        question = "Change cookbook #{value['name']} version from"
-        question += " #{value[@dst_env_name]} to #{value[@src_env_name]} (y/n): "
-        if ui.ask_question(question) === 'y'
-          @dst_env.cookbook(value['name'], value[@src_env_name])
-        end
-      end
-    end
   end
 end
