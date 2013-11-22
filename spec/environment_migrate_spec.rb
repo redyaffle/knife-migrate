@@ -271,6 +271,26 @@ describe KnifeMigrate::EnvironmentMigrate do
     end
   end
 
+  context '#environment_path' do
+    let(:expected_env_path) do
+      '/Users/test/workspace/organizations/in/environments'
+    end
+
+    it 'sets environment path based on cookbook path' do
+      expect(Chef::Config).to receive(:[]).with(:cookbook_path).and_return(
+        '/Users/test/workspace/.chef/../organizations/in/cookbooks'
+      )
+      expect(plugin.environment_path).to eq(expected_env_path)
+    end
+
+    it 'sets handles cookbook path ending with /' do
+      expect(Chef::Config).to receive(:[]).with(:cookbook_path).and_return(
+        '/Users/test/workspace/.chef/../organizations/in/cookbooks/'
+      )
+      expect(plugin.environment_path).to eq(expected_env_path)
+    end
+  end
+
   context '#run' do
     let(:dst_env) do
       env = ::Chef::Environment.new
@@ -300,18 +320,30 @@ describe KnifeMigrate::EnvironmentMigrate do
       env
     end
 
-    it 'sets up run method' do
+    let(:environment_path) do
+      '/Users/test/workspace/organizations/in/environments'
+    end
+
+    let(:ui_obj) { double('ui') }
+
+    before do
       allow(plugin).to receive(:name_args).and_return(['stable', 'debug'])
       allow(plugin).to receive(:environment).with('debug').and_return(dst_env)
       allow(plugin).to receive(:environment).with('stable').and_return(src_env)
+      allow(plugin).to receive(:ui).and_return(ui_obj)
+      expect(Chef::Config).to receive(:[]).with(:cookbook_path).and_return(
+        '/Users/test/workspace/.chef/../organizations/in/cookbooks'
+      )
+    end
+
+    it 'sets up run method' do
       expect(plugin).to receive(:validate)
       expect(plugin).to receive(:load_environments).and_call_original
       expect(plugin).to receive(:update_versions)
       expect(plugin).to receive(:update_attrs)
-      ui_obj = double('ui')
-      allow(plugin).to receive(:ui).and_return(ui_obj)
       expect(JSON).to receive(:pretty_generate).with(dst_env.to_hash)
       expect(ui_obj).to receive(:msg)
+      expect(::File).to receive(:open).with("#{environment_path}/debug.json", 'w')
       plugin.run
     end
   end

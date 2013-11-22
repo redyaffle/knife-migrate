@@ -104,12 +104,29 @@ module KnifeMigrate
       end
     end
 
+    def environment_path
+      cookbook_path = Chef::Config[:cookbook_path]
+      cookbook_path.chomp('/')
+      organization_path = ::File.split(cookbook_path).first
+      ::File.absolute_path "#{organization_path}/environments"
+    end
+
     def run
       validate
       load_environments
       update_versions
       update_attrs
-      ui.msg(::JSON.pretty_generate(@dst_env.to_hash))
+      updated_env = ::JSON.pretty_generate(@dst_env.to_hash)
+      begin
+        env_file = "#{environment_path}/#{@dst_env_name}.json"
+        ::File.open(env_file, 'w') do |f|
+          f.write(updated_env)
+        end
+        ui.msg("Completed updated to #{env_file}")
+      rescue Exception => e
+        ui.msg("Error: #{e.message}")
+        ui.msg(updated_env)
+      end
     end
   end
 end
