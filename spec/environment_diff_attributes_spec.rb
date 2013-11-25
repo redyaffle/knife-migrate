@@ -1,8 +1,8 @@
 require 'spec_helper'
-require 'chef/knife/environment_diff_attributes'
+require 'chef/knife/environment_missing_attributes'
 
 module KnifeMigrate
-  describe EnvironmentDiffAttributes do
+  describe EnvironmentMissingAttributes do
     let(:plugin) { described_class.new }
 
     it 'sets up banner' do

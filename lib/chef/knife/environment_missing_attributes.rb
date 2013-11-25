@@ -4,7 +4,7 @@ require 'knife_migrate/mixins/default_attributes'
 require 'knife_migrate/mixins/environments'
 
 module KnifeMigrate
-  class EnvironmentDiffAttributes < Chef::Knife
+  class EnvironmentMissingAttributes < Chef::Knife
     include KnifeMigrate::Validations
     include KnifeMigrate::DefaultAttributes
     include KnifeMigrate::Environments
