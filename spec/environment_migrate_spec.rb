@@ -248,21 +248,37 @@ describe KnifeMigrate::EnvironmentMigrate do
       env
     end
 
+    let(:ui_obj) { double('ui') }
     before do
       allow(plugin).to receive(:name_args).and_return(['stable', 'debug'])
       allow(plugin).to receive(:environment).with('debug').and_return(dst_env)
       allow(plugin).to receive(:environment).with('stable').and_return(src_env)
 
       plugin.load_environments
+
+      allow(plugin).to receive(:ui).and_return(ui_obj)
+      allow(ui_obj).to receive(:color).with('cc_nginx', :magenta).
+        and_return('cc_nginx')
+      allow(ui_obj).to receive(:color).with('debug', :yellow).
+        and_return('debug')
+      allow(ui_obj).to receive(:color).with('stable', :yellow).
+        and_return('stable')
+      allow(ui_obj).to receive(:color).with('app_server_name', :blue).
+        and_return('app_server_name')
+      allow(ui_obj).to receive(:color).with('stable.in.mycasebook.org', :blue).
+        and_return('stable.in.mycasebook.org')
+      allow(ui_obj).to receive(:color).with('app_name', :blue).
+        and_return('app_name')
+      allow(ui_obj).to receive(:color).with('casebook2', :blue).
+        and_return('casebook2')
+      allow(ui_obj).to receive(:color).with('(y/n): ', :bold)
     end
 
     it 'returns updated attributes' do
-      ui_obj = double('ui')
-      allow(plugin).to receive(:ui).and_return(ui_obj)
       allow(ui_obj).to receive(:msg)
       allow(plugin).to receive(:confirm_update?).and_return(true, true, false)
       expect(ui_obj).to receive(:ask_question).with(
-        'What is the new value of app_server_name on debug: ').
+        'What is the new value of cc_nginx.app_server_name on debug: ').
         and_return('debug.in.mycasebook.org')
       plugin.update_attrs
       expect(dst_env.default_attributes['cc_nginx']).to eq({
