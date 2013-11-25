@@ -5,7 +5,7 @@ describe KnifeMigrate::EnvironmentMigrate do
   let(:plugin) { described_class.new }
 
   it 'sets up banner' do
-    banner = 'knife environment migrate --from [Environment] --to [Environment]'
+    banner = 'knife environment migrate -from [Environment] -to [Environment]'
     expect(described_class.banner).to eq(banner)
   end
 

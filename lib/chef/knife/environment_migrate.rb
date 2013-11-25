@@ -1,75 +1,25 @@
 require 'chef/knife'
+require 'knife_migrate/knife_migrate'
 
 module KnifeMigrate
   class EnvironmentMigrate < Chef::Knife
-    banner 'knife environment migrate --from [Environment] --to [Environment]'
+    include KnifeMigrate::Validations
+    include KnifeMigrate::CookbookVersions
+    include KnifeMigrate::DefaultAttributes
+    include KnifeMigrate::ChefPaths
+    include KnifeMigrate::UserInterface
+
+    banner 'knife environment migrate -from [Environment] -to [Environment]'
 
     option :from,
-      short: '--from',
+      short: '-from',
       long:  '--from',
       description: 'From Environment'
 
     option :to,
-      short:  '--to',
+      short:  '-to',
       long:  '--to',
       description: 'To Environment'
-
-    def validate
-      self.config = Chef::Config.merge!(config)
-      if name_args.size < 2
-        ui.fatal 'You need to supply two environments!'
-        show_usage
-        exit(1)
-      end
-    end
-
-    def environment(env)
-      rest.get_rest("environments/#{env}")
-    end
-
-    def versions(dst_cookbooks, src_cookbooks)
-      result = []
-      src_cookbooks.each do |name, src_version|
-        dst_version = dst_cookbooks[name]
-        if src_version != dst_version
-          result << {
-            'name' => name,
-            @dst_env_name => dst_version,
-            @src_env_name => src_version
-          }
-        end
-      end
-      result
-    end
-
-    def confirm_update?(question)
-      case ui.ask_question(question)
-      when 'y', 'Y'
-        true
-      when 'n', 'N'
-        false
-      else
-        ui.msg('Just say y or n.')
-        confirm_update?(question)
-      end
-    end
-
-    def missing_attrs(dst_attrs, src_attrs)
-      result = []
-      src_attrs.keys.each do |cookbook_name|
-        unless dst_attrs.has_key?(cookbook_name)
-          result << { cookbook_name => src_attrs[cookbook_name] }
-        end
-      end
-      result
-    end
-
-    def load_environments
-      @dst_env_name ||= name_args.last
-      @src_env_name ||= name_args.first
-      @dst_env ||= environment(@dst_env_name)
-      @src_env ||= environment(@src_env_name)
-    end
 
     def update_versions
       dst_cookbooks = @dst_env.cookbook_versions
@@ -90,14 +40,6 @@ module KnifeMigrate
           update(missing_attr, cookbook_name)
         end
       end
-    end
-
-
-    def environment_path
-      cookbook_path = Chef::Config[:cookbook_path].first
-      cookbook_path.chomp('/')
-      organization_path = ::File.split(cookbook_path).first
-      ::File.absolute_path "#{organization_path}/environments"
     end
 
     def run
@@ -166,31 +108,5 @@ module KnifeMigrate
         @dst_env.cookbook(cookbook['name'], cookbook[@src_env_name])
       end
     end
-
-    def _color_yes_no
-      ui.color('(y/n): ', :bold)
-    end
-
-    def _color_attributes(attr_name, attr_value)
-      [ui.color(attr_name, :blue), ui.color(attr_value, :blue)]
-    end
-
-    def _color_cookbook_name(cookbook_name)
-      ui.color(cookbook_name, :magenta)
-    end
-
-    def _color_environment_names
-      [ui.color(@dst_env_name, :yellow), ui.color(@src_env_name, :yellow)]
-    end
-
-    def _color_cookbook_versions(cookbook)
-      dst_version = cookbook[@dst_env_name] || 'none'
-      src_version = cookbook[@src_env_name]
-      [
-        ui.color(dst_version, :red),
-        ui.color(src_version, :green)
-      ]
-    end
-
   end
 end
