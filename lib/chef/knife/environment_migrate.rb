@@ -74,35 +74,24 @@ module KnifeMigrate
     def update_versions
       dst_cookbooks = @dst_env.cookbook_versions
       src_cookbooks = @src_env.cookbook_versions
-      versions(dst_cookbooks, src_cookbooks).each do |value|
-        question = "Change cookbook #{value['name']} version from"
-        question += " #{value[@dst_env_name]} to #{value[@src_env_name]} on #{@dst_env_name} (y/n): "
-        if confirm_update?(question)
-          @dst_env.cookbook(value['name'], value[@src_env_name])
-        end
+      versions(dst_cookbooks, src_cookbooks).each do |cookbook|
+        update_version(cookbook)
       end
     end
 
     def update_attrs
       dst_attrs = @dst_env.default_attributes
       src_attrs = @src_env.default_attributes
-      missing_attrs(dst_attrs, src_attrs).each do |cookbook_attr|
-        cookbook_name = cookbook_attr.keys.first
-        ui.msg("Attribute #{cookbook_name} is missing on #{@dst_env_name}")
-        question = "Import #{cookbook_name} attribute on to #{@dst_env_name}? (y/n): "
-        if confirm_update?(question)
-          dst_attrs[cookbook_name] = cookbook_attr[cookbook_name]
-          cookbook_attr[cookbook_name].each do |attr_name, attr_value|
-            ui.msg("The value of #{attr_name} is #{attr_value} on #{@src_env_name}")
-            if confirm_update?("Change the value of #{attr_name} on #{@dst_env_name} (y/n): ")
-              question = "What is the new value of #{attr_name} on #{@dst_env_name}: "
-              answer =  ui.ask_question(question)
-              dst_attrs[cookbook_name][attr_name] = answer
-            end
-          end
+
+      missing_attrs(dst_attrs, src_attrs).each do |missing_attr|
+        cookbook_name = missing_attr.keys.first
+        if import_missing_attr?(cookbook_name)
+          dst_attrs[cookbook_name] = missing_attr[cookbook_name]
+          update(missing_attr, cookbook_name)
         end
       end
     end
+
 
     def environment_path
       cookbook_path = Chef::Config[:cookbook_path].first
@@ -116,7 +105,12 @@ module KnifeMigrate
       load_environments
       update_versions
       update_attrs
-      updated_env = ::JSON.pretty_generate(@dst_env.to_hash)
+      download_env(::JSON.pretty_generate(@dst_env.to_hash))
+    end
+
+    private
+
+    def download_env(updated_env)
       begin
         env_file = "#{environment_path}/#{@dst_env_name}.json"
         ::File.open(env_file, 'w') do |f|
@@ -128,5 +122,40 @@ module KnifeMigrate
         ui.msg(updated_env)
       end
     end
+
+    def import_missing_attr?(cookbook_name)
+      ui.msg("Attribute #{cookbook_name} is missing on #{@dst_env_name}")
+      question = "Import #{cookbook_name} attribute on to #{@dst_env_name}? (y/n): "
+      confirm_update?(question)
+    end
+
+    def new_attr(attr_name, attr_value)
+      ui.msg("The value of #{attr_name} is #{attr_value} on #{@src_env_name}")
+      question = "Change the value of #{attr_name} on #{@dst_env_name} (y/n): "
+      if confirm_update?(question)
+        question = "What is the new value of #{attr_name} on #{@dst_env_name}: "
+        ui.ask_question(question)
+      end
+    end
+
+    def update(missing_attr, cookbook)
+      missing_attr[cookbook].each do |attr_name, attr_value|
+        new_attr_value = new_attr(attr_name, attr_value)
+        if new_attr_value
+          dst_attrs = @dst_env.default_attributes
+          dst_attrs[cookbook][attr_name] = new_attr_value
+        end
+      end
+    end
+
+    def update_version(cookbook)
+      question = "Change cookbook #{cookbook['name']} version from"
+      question += " #{cookbook[@dst_env_name]} to #{cookbook[@src_env_name]} on"
+      question += " #{@dst_env_name} (y/n): "
+      if confirm_update?(question)
+        @dst_env.cookbook(cookbook['name'], cookbook[@src_env_name])
+      end
+    end
+
   end
 end
