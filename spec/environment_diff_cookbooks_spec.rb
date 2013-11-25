@@ -11,7 +11,7 @@ describe KnifeMigrate::EnvironmentDiffCookbooks do
   end
 
   it 'is knife plugin' do
-    banner = 'knife environment diff cookbooks --e1 [source env] --e2 [destination env]'
+    banner = 'knife environment diff cookbooks -e1 [source env] -e2 [destination env]'
     expect(described_class.banner).to eq(banner)
   end
 
@@ -61,6 +61,11 @@ describe KnifeMigrate::EnvironmentDiffCookbooks do
   end
 
   context '#versions' do
+    before do
+      allow(plugin).to receive(:name_args).and_return(['debug','unstable']).twice
+      plugin.environment_names
+    end
+
     it 'grabs right version' do
       src_cookbooks =
         {
@@ -107,8 +112,8 @@ describe KnifeMigrate::EnvironmentDiffCookbooks do
         }
           expect(plugin.versions(src_cookbooks, dst_cookbooks)).to match_array(
             [
-              { name: 'ant', src_version: '1.0.2', dst_version: '1.0.1' },
-              { name: 'apache2', src_version: '1.8.4', dst_version: '1.8.3' }
+              { 'name' => 'ant', 'debug' => '1.0.2', 'unstable' => '1.0.1' },
+              { 'name' => 'apache2', 'debug' => '1.8.4', 'unstable' => '1.8.3' }
             ]
           )
     end
@@ -167,8 +172,8 @@ describe KnifeMigrate::EnvironmentDiffCookbooks do
     expect(plugin).to receive(:cookbooks).with('debug')
     expect(plugin).to receive(:cookbooks).with('unstable')
     expect(plugin).to receive(:versions)
-    expect(plugin).to receive(:ui).and_return(ui_object).twice
-    expect(ui_object).to receive(:msg).twice
+    expect(plugin).to receive(:ui).and_return(ui_object)
+    expect(ui_object).to receive(:msg)
     plugin.run
   end
 end

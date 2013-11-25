@@ -1,27 +1,25 @@
 require 'chef/knife'
 module KnifeMigrate
   class EnvironmentDiffCookbooks < Chef::Knife
-    banner 'knife environment diff cookbooks --e1 [source env] --e2 [destination env]'
+    banner 'knife environment diff cookbooks -e1 [source env] -e2 [destination env]'
 
     option :env1,
-      short:  '--e1',
+      short:  '-e1',
       long:  '--env1',
       description: 'Source Environment'
 
     option :env2,
-      short: '--e2',
+      short: '-e2',
       long:  '--env2',
       description: 'Destination Environment'
 
     def run
       self.config = Chef::Config.merge!(config)
       validate
-      src_env = name_args.first
-      dst_env = name_args.last
-      src_cookbooks = cookbooks(src_env)
-      dst_cookbooks = cookbooks(dst_env)
+      environment_names
+      src_cookbooks = cookbooks(@src_env_name)
+      dst_cookbooks = cookbooks(@dst_env_name)
       diff_versions = versions(src_cookbooks, dst_cookbooks)
-      ui.msg("cookbook version differences between #{src_env} and #{dst_env}")
       ui.msg(diff_versions)
     end
 
@@ -41,9 +39,9 @@ module KnifeMigrate
         dst_version = cookbook_version(dst_data)
         if src_version != dst_version
           result << {
-            name: name,
-            src_version: src_version,
-            dst_version: dst_version
+            'name' => name,
+            @src_env_name => src_version,
+            @dst_env_name => dst_version
           }
         end
       end
@@ -60,6 +58,11 @@ module KnifeMigrate
       else
         data['versions'].first['version']
       end
+    end
+
+    def environment_names
+      @src_env_name = name_args.first
+      @dst_env_name = name_args.last
     end
   end
 end
