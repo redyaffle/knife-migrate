@@ -3,17 +3,6 @@ module KnifeMigrate
     module ClassMethods; end
 
     module InstanceMethods
-      def environment(env)
-        rest.get_rest("environments/#{env}")
-      end
-
-      def load_environments
-        @dst_env_name ||= name_args.last
-        @src_env_name ||= name_args.first
-        @dst_env ||= environment(@dst_env_name)
-        @src_env ||= environment(@src_env_name)
-      end
-
       def versions(dst_cookbooks, src_cookbooks)
         result = []
         src_cookbooks.each do |name, src_version|

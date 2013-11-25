@@ -15,6 +15,10 @@ module KnifeMigrate
         end
       end
 
+      def pretty_json(hash)
+        ::JSON.pretty_generate(hash)
+      end
+
       private
       def _color_yes_no
         ui.color('(y/n): ', :bold)

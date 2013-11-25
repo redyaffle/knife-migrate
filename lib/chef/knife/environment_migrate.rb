@@ -4,6 +4,7 @@ require 'knife_migrate/knife_migrate'
 module KnifeMigrate
   class EnvironmentMigrate < Chef::Knife
     include KnifeMigrate::Validations
+    include KnifeMigrate::Environments
     include KnifeMigrate::CookbookVersions
     include KnifeMigrate::DefaultAttributes
     include KnifeMigrate::ChefPaths
@@ -47,7 +48,7 @@ module KnifeMigrate
       load_environments
       update_versions
       update_attrs
-      download_env(::JSON.pretty_generate(@dst_env.to_hash))
+      download_env(pretty_json(@dst_env.to_hash))
     end
 
     private
