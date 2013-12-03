@@ -25,7 +25,7 @@ module KnifeMigrate
       end
 
       def _color_attributes(attr_name, attr_value)
-        [ui.color(attr_name, :blue), ui.color(attr_value, :blue)]
+        [ui.color(attr_name, :blue), ui.color(attr_value.to_s, :blue)]
       end
 
       def _color_cookbook_name(cookbook_name)
