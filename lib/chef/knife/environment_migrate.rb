@@ -54,12 +54,12 @@ module KnifeMigrate
       while confirm_update?(question)
         get_cookbook_name = 'which cookbook do you want to remove? :  '
         cookbook_name = ui.ask_question(get_cookbook_name)
-        cookbook_name = _color_cookbook_name(cookbook_name)
         cookbook_version = remove_cookbook(cookbook_name)
+        color_cookbook_name = _color_cookbook_name(cookbook_name)
         if cookbook_version
-          ui.msg("Removed cookbook #{cookbook_name} #{cookbook_version}")
+          ui.msg("Removed cookbook #{color_cookbook_name} #{cookbook_version}")
         else
-          message = "Trying to remove cookbook #{cookbook_name} "
+          message = "Trying to remove cookbook #{color_cookbook_name} "
           message += "that does not exist in #{dst_env_name} environment!"
           ui.msg(ui.color(message, :red))
         end
