@@ -50,7 +50,7 @@ module KnifeMigrate
     def remove_cookbooks
       dst_env_name = _color_environment_names.first
       question = "Do you want to remove any cookbook from "
-      question += "#{dst_env_name} environment"
+      question += "#{dst_env_name} environment #{_color_yes_no}"
       while confirm_update?(question)
         get_cookbook_name = 'which cookbook do you want to remove? :  '
         cookbook_name = ui.ask_question(get_cookbook_name)

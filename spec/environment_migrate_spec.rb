@@ -366,7 +366,7 @@ describe KnifeMigrate::EnvironmentMigrate do
 
     context 'removing existing cookbook from environment' do
       it 'prompts the user to remove cookbooks' do
-        question = 'Do you want to remove any cookbook from debug environment'
+        question = 'Do you want to remove any cookbook from debug environment (y/n): '
         expect(plugin).to receive(:confirm_update?).with(question).
           and_return(true, false)
         question1 = 'which cookbook do you want to remove? :  '
@@ -380,7 +380,7 @@ describe KnifeMigrate::EnvironmentMigrate do
 
     context 'removing non existent cookbook from environment' do
       it 'should say cookbook exists' do
-        question = 'Do you want to remove any cookbook from debug environment'
+        question = 'Do you want to remove any cookbook from debug environment (y/n): '
         expect(plugin).to receive(:confirm_update?).with(question).
           and_return(true, false)
         question1 = 'which cookbook do you want to remove? :  '
@@ -394,7 +394,7 @@ describe KnifeMigrate::EnvironmentMigrate do
 
     context 'removing multiple cookbooks' do
       before do
-        question = 'Do you want to remove any cookbook from debug environment'
+        question = 'Do you want to remove any cookbook from debug environment (y/n): '
         expect(plugin).to receive(:confirm_update?).with(question).
           and_return(true, true, false)
         question1 = 'which cookbook do you want to remove? :  '
