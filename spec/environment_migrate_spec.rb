@@ -308,6 +308,107 @@ describe KnifeMigrate::EnvironmentMigrate do
     end
   end
 
+  context '#remove_cookbook' do
+    let(:dst_env) do
+      env = ::Chef::Environment.new
+      env.name('debug')
+      env.cookbook_versions({ "apt"=>"= 2.0.0", "logrotate"=>"= 1.1.3" })
+      env
+    end
+
+    let(:src_env) do
+      env = ::Chef::Environment.new
+      env.name('stable')
+      env.cookbook_versions({ "apt"=>"= 2.0.1", "ark"=>"= 0.3.2" })
+      env
+    end
+
+    before do
+      allow(plugin).to receive(:name_args).and_return(['stable', 'debug'])
+      allow(plugin).to receive(:environment).with('debug').and_return(dst_env)
+      allow(plugin).to receive(:environment).with('stable').and_return(src_env)
+
+      plugin.load_environments
+    end
+
+    it 'removes cookbook from the environment' do
+      plugin.remove_cookbook('logrotate')
+      expect(dst_env.cookbook_versions).not_to have_key('logrotate')
+    end
+
+    it 'remove only existing cookbook' do
+      expect { plugin.remove_cookbook('awesome_cookbook') }.not_to raise_error
+    end
+  end
+
+  describe 'interactive removing cookbooks' do
+    let(:dst_env) do
+      env = ::Chef::Environment.new
+      env.name('debug')
+      env.cookbook_versions({ "apt"=>"= 2.0.0", "logrotate"=>"= 1.1.3" })
+      env
+    end
+
+    let(:src_env) do
+      env = ::Chef::Environment.new
+      env.name('stable')
+      env.cookbook_versions({ "apt"=>"= 2.0.1", "ark"=>"= 0.3.2" })
+      env
+    end
+
+    before do
+      allow(plugin).to receive(:name_args).and_return(['stable', 'debug'])
+      allow(plugin).to receive(:environment).with('debug').and_return(dst_env)
+      allow(plugin).to receive(:environment).with('stable').and_return(src_env)
+
+      plugin.load_environments
+    end
+
+    context 'removing existing cookbook from environment' do
+      it 'prompts the user to remove cookbooks' do
+        question = 'Do you want to remove any cookbook from debug environment'
+        expect(plugin).to receive(:confirm_update?).with(question).
+          and_return(true, false)
+        question1 = 'which cookbook do you want to remove? :  '
+        expect(plugin.ui).to receive(:ask_question).with(question1).
+          and_return('apt')
+        expect(plugin.ui).to receive(:msg).with('Removed cookbook apt = 2.0.0')
+        plugin.remove_cookbooks
+        expect(dst_env.cookbook_versions).not_to have_key('apt')
+      end
+    end
+
+    context 'removing non existent cookbook from environment' do
+      it 'should say cookbook exists' do
+        question = 'Do you want to remove any cookbook from debug environment'
+        expect(plugin).to receive(:confirm_update?).with(question).
+          and_return(true, false)
+        question1 = 'which cookbook do you want to remove? :  '
+        expect(plugin.ui).to receive(:ask_question).with(question1).
+          and_return('test')
+        expect(plugin.ui).to receive(:msg).
+          with('Trying to remove cookbook test that does not exist in debug environment!')
+        plugin.remove_cookbooks
+      end
+    end
+
+    context 'removing multiple cookbooks' do
+      before do
+        question = 'Do you want to remove any cookbook from debug environment'
+        expect(plugin).to receive(:confirm_update?).with(question).
+          and_return(true, true, false)
+        question1 = 'which cookbook do you want to remove? :  '
+        expect(plugin.ui).to receive(:ask_question).with(question1).
+          and_return('apt', 'logrotate').twice
+      end
+
+      it 'allows for multiple cookbook removal from environment' do
+        plugin.remove_cookbooks
+        expect(dst_env.cookbook_versions).to be_empty
+      end
+    end
+  end
+
   context '#run' do
     let(:dst_env) do
       env = ::Chef::Environment.new
@@ -357,6 +458,7 @@ describe KnifeMigrate::EnvironmentMigrate do
       expect(plugin).to receive(:validate)
       expect(plugin).to receive(:load_environments).and_call_original
       expect(plugin).to receive(:update_versions)
+      expect(plugin).to receive(:remove_cookbooks)
       expect(plugin).to receive(:update_attrs)
       expect(JSON).to receive(:pretty_generate).with(dst_env.to_hash)
       allow(ui_obj).to receive(:msg)
