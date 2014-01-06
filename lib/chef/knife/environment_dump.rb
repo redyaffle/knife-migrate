@@ -8,34 +8,39 @@ module KnifeMigrate
 
     banner 'knife environment dump [ENVIRONMENT]'
 
+    option :all,
+      short: '-a',
+      long:  '--all',
+      description: 'From Environment'
+
     def run
       validate
 
-      environment = name_args.first
-
-      ui.msg("Dumping environment #{environment}...")
-
-      attrs = load(environment)
-
-      save_environment(environment, attrs)
+      if !config[:all]
+        environment = name_args.first
+        dump_environment(environment)
+      else
+        rest.get('environments').keys.each do |env|
+          next if env =~ /^_/
+          dump_environment(env)
+        end
+      end
     end
 
     def validate
-      if name_args.length < 1
+      if name_args.length < 1 && config[:all] == false
         show_usage
         ui.fatal("You must specify an environment")
         exit 1
       end
     end
 
-    def load(environment)
-      rest.get("environments/#{environment}")
-    end
-
-    def save_environment(environment, attrs)
+    def dump_environment(environment)
+      ui.msg("Dumping environment #{environment}...")
+      attrs = rest.get("environments/#{environment}")
       path = File.join(environment_path, "#{environment}.json")
       File.open(path, 'w') do |f|
-        f.puts JSON.pretty_generate(JSON.parse(attrs))
+        f.puts ::JSON.pretty_generate(attrs.to_hash)
       end
     end
   end

@@ -13,6 +13,11 @@ module KnifeMigrate
         organization_path = ::File.split(cookbook_path).first
         ::File.absolute_path "#{organization_path}/environments"
       end
+
+      def node_path
+        organization_path = ::File.split(cookbook_path).first
+        ::File.absolute_path "#{organization_path}/nodes"
+      end
     end
 
     def self.included(receiver)
