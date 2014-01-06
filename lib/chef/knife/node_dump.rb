@@ -26,9 +26,9 @@ module KnifeMigrate
         ui.msg("Dumping node #{node.name}...")
         path = File.join(node_path, "#{node.name}.json")
         File.open(path, 'w') do |f|
-          attrs = rest.get("nodes/#{node.name}").to_hash
-          remove_automatic_attributes(attrs)
-          f.puts ::JSON.pretty_generate(attrs)
+          n = format_for_display(node).to_hash
+          remove_automatic_attributes(n)
+          f.puts ::JSON.pretty_generate(::JSON.parse(n.to_json))
         end
       end
     end

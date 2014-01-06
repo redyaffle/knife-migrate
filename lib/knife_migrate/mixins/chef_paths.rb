@@ -9,13 +9,15 @@ module KnifeMigrate
         cookbook_path
       end
 
+      def organization_path
+        ::File.split(cookbook_path).first
+      end
+
       def environment_path
-        organization_path = ::File.split(cookbook_path).first
         ::File.absolute_path "#{organization_path}/environments"
       end
 
       def node_path
-        organization_path = ::File.split(cookbook_path).first
         ::File.absolute_path "#{organization_path}/nodes"
       end
     end
