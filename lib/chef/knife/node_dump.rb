@@ -24,10 +24,11 @@ module KnifeMigrate
 
       results.each do |node|
         ui.msg("Dumping node #{node.name}...")
-        path = File.join(node_path, "#{node}.json")
+        path = File.join(node_path, "#{node.name}.json")
         File.open(path, 'w') do |f|
-          attributes = remove_automatic_attributes(node.attributes)
-          f.puts ::JSON.pretty_generate(attributes)
+          attrs = rest.get("nodes/#{node.name}").to_hash
+          remove_automatic_attributes(attrs)
+          f.puts ::JSON.pretty_generate(attrs)
         end
       end
     end
@@ -36,7 +37,7 @@ module KnifeMigrate
       escaped_query = URI.escape(pattern, Regexp.new("[^#{URI::PATTERN::UNRESERVED}]"))
 
       q = Chef::Search::Query.new
-      q.search('node', "name:*#{escaped_query}").first
+      q.search('node', "name:*#{escaped_query}*").first
     end
 
     def validate

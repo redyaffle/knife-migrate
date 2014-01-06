@@ -37,10 +37,10 @@ module KnifeMigrate
 
     def dump_environment(environment)
       ui.msg("Dumping environment #{environment}...")
-      attrs = rest.get("environments/#{environment}")
+      attrs = rest.get("environments/#{environment}").to_hash
       path = File.join(environment_path, "#{environment}.json")
       File.open(path, 'w') do |f|
-        f.puts ::JSON.pretty_generate(attrs.to_hash)
+        f.puts ::JSON.pretty_generate(attrs)
       end
     end
   end
