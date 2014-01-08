@@ -8,27 +8,24 @@ module KnifeMigrate
 
     banner 'knife node dump [PATTERN]'
 
-    AUTOMATIC_ATTRIBUTES = [
-      'cpu', 'etc', 'counters', 'ohai_time',
-      'filesystem', 'memory', 'uptime', 'uptime_seconds',
-      'idletime', 'idletime_seconds', 'arp', 'neighbour_inet6',
-      'refcount'
-    ]
-
     def run
       validate
-
       pattern = name_args.first
-
       results = query(pattern)
 
       results.each do |node|
         ui.msg("Dumping node #{node.name}...")
         path = File.join(node_path, "#{node.name}.json")
+
+        config[:format] = "json"
+        config[:long_output] = true
+
+        node = Chef::Node.load(node.name)
+        node_json = JSON.parse(ui.presenter.format(format_for_display(node)))
+        node_json.delete('automatic')
+
         File.open(path, 'w') do |f|
-          n = format_for_display(node).to_hash
-          remove_automatic_attributes(n)
-          f.puts ::JSON.pretty_generate(::JSON.parse(n.to_json))
+          f.puts ::JSON.pretty_generate(node_json)
         end
       end
     end
@@ -45,24 +42,6 @@ module KnifeMigrate
         show_usage
         ui.fatal("You must specify a node name pattern")
         exit 1
-      end
-    end
-
-    def remove_automatic_attributes(hash)
-      AUTOMATIC_ATTRIBUTES.each do |attr|
-        recursive_delete(hash['automatic'], attr)
-      end
-    end
-
-    def recursive_delete(hash, attr)
-      return unless hash.instance_of?(Hash)
-
-      if hash[attr]
-        hash.delete(attr)
-      else
-        hash.each_value do |value|
-          recursive_delete(value, attr)
-        end
       end
     end
   end
