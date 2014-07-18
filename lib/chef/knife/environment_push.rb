@@ -1,4 +1,5 @@
 require 'chef/knife'
+require 'chef/knife/core/object_loader'
 require 'chef/knife/environment_from_file'
 require 'knife_migrate/mixins/chef_paths'
 require 'json'
